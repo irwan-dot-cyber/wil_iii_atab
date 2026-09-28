@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>WebGIS Subdirektorat Wilayah III Direktorat Air Tanah dan Air Baku Kementerian Pekerjaan Umum</title>
+  <title>WebGIS ATAB Wilayah III</title>
   <meta name="description" content="Prototipe WebGIS pemantauan infrastruktur air tanah dan air baku Subdirektorat Wilayah III." />
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b3050'/%3E%3Cpath d='M32 10C24 22 17 30 17 40a15 15 0 0030 0c0-10-7-18-15-30z' fill='%2324c8e5'/%3E%3Cpath d='M23 41c3 5 11 7 18 2' fill='none' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/png" href="LogoPUPR.png" />
   <style>
     :root {
       color-scheme: light;
@@ -54,10 +54,11 @@
     .brand-mark {
       width: 40px; height: 40px; border-radius: 12px;
       display: grid; place-items: center;
-      background: linear-gradient(145deg, #26c9e4, #1682a7);
-      box-shadow: inset 0 1px rgba(255,255,255,.35), 0 8px 20px rgba(0,0,0,.2);
+      padding: 4px;
+      background: white;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.58), 0 8px 20px rgba(0,0,0,.2);
     }
-    .brand-mark svg { width: 25px; height: 25px; }
+    .brand-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
     .brand h1 { margin: 0; font-size: 1rem; letter-spacing: .02em; }
     .brand p { margin: 3px 0 0; font-size: .78rem; color: #b9d5e5; }
     .top-search {
@@ -74,6 +75,8 @@
     .top-search input::placeholder { color: #bad0de; }
     .top-search input:focus { border-color: #4cd3e9; box-shadow: 0 0 0 3px rgba(32,185,215,.18); }
     .demo-pill { margin-left: auto; padding: 8px 11px; border-radius: 999px; font-size: .75rem; font-weight: 750; letter-spacing: .04em; color: #092b43; background: #bdf5ff; white-space: nowrap; }
+    .monitor-link { padding: 9px 13px; border: 1px solid rgba(255,255,255,.24); border-radius: 11px; color: white; background: rgba(255,255,255,.1); text-decoration: none; font-size: .76rem; font-weight: 750; white-space: nowrap; }
+    .monitor-link:hover { background: rgba(255,255,255,.18); }
 
     .workspace { min-height: 0; display: grid; grid-template-columns: 340px 1fr; }
     .sidebar {
@@ -164,6 +167,7 @@
       .brand { min-width: 0; }
       .brand-mark { width: 36px; height: 36px; }
       .brand p, .demo-pill { display: none; }
+      .monitor-link { padding: 9px 10px; font-size: .7rem; }
       .brand h1 { font-size: .88rem; }
       .top-search { max-width: none; }
       .top-search input { height: 38px; padding-left: 38px; font-size: .82rem; }
@@ -197,7 +201,7 @@
       </button>
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.8 7 5 10.7 5 15a7 7 0 0014 0c0-4.3-3.8-8-7-13z" fill="white"/><path d="M8.2 15.3c1 1.8 3.5 2.5 5.8 1.2" stroke="#1682a7" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <img src="LogoPUPR.png" alt="" />
         </div>
         <div class="brand-text">
           <h1>WebGIS ATAB Wilayah III</h1>
@@ -208,6 +212,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
         <input id="searchInput" type="search" placeholder="Cari kegiatan, kabupaten/kota, atau balai…" aria-label="Cari lokasi" />
       </div>
+      <a class="monitor-link" href="monitoring.html">Monitoring Fisik</a>
       <span class="demo-pill">PROTOTIPE · DATA CONTOH</span>
     </header>
 

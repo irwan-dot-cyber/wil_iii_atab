@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Monitoring Fisik ATAB TA 2026</title>
+  <meta name="description" content="Pemantauan rencana dan realisasi mingguan kegiatan fisik ATAB TA 2026." />
+  <link rel="icon" type="image/png" href="LogoPUPR.png" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #082b49;
+      --blue: #1678a5;
+      --cyan: #25a9c7;
+      --orange: #f0a500;
+      --magenta: #e65db3;
+      --green: #169b62;
+      --red: #d24f4f;
+      --ink: #172b3a;
+      --muted: #65798a;
+      --line: #dce5eb;
+      --paper: #f4f7f9;
+      --white: #fff;
+      --shadow: 0 14px 38px rgba(8,43,73,.1);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, select { font: inherit; }
+    .topbar { min-height: 72px; padding: 12px clamp(16px,4vw,48px); display: flex; align-items: center; gap: 14px; color: white; background: linear-gradient(115deg,#071f36,#0c456f); }
+    .logo { width: 44px; height: 44px; padding: 4px; border-radius: 12px; background: white; object-fit: contain; }
+    .brand { min-width: 0; }
+    .brand strong { display: block; font-size: .95rem; }
+    .brand span { display: block; margin-top: 3px; color: #bbd8e8; font-size: .75rem; }
+    .back { margin-left: auto; padding: 9px 13px; color: white; border: 1px solid rgba(255,255,255,.25); border-radius: 10px; text-decoration: none; font-size: .78rem; font-weight: 750; }
+    .back:hover { background: rgba(255,255,255,.12); }
+    main { width: min(1500px,calc(100% - 28px)); margin: 22px auto 38px; }
+    .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+    .eyebrow { margin: 0 0 7px; color: var(--blue); font-size: .72rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; max-width: 920px; color: var(--navy); font-size: clamp(1.35rem,3vw,2.15rem); line-height: 1.15; }
+    .period { margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    .selector label { display: block; margin-bottom: 6px; color: var(--muted); font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .selector select { min-width: 230px; height: 42px; padding: 0 38px 0 12px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 11px; outline: none; }
+    .cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+    .card { position: relative; overflow: hidden; padding: 17px 18px; background: white; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 26px rgba(8,43,73,.055); }
+    .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent); }
+    .card span { display: block; color: var(--muted); font-size: .72rem; font-weight: 750; text-transform: uppercase; letter-spacing: .055em; }
+    .card strong { display: block; margin-top: 7px; color: var(--navy); font-size: 1.7rem; }
+    .card small { display: block; margin-top: 4px; color: var(--muted); font-size: .72rem; }
+    .panel { margin-bottom: 16px; padding: 18px; background: white; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+    .panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .panel h2 { margin: 0; color: var(--navy); font-size: 1rem; }
+    .panel p { margin: 5px 0 0; color: var(--muted); font-size: .76rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: .72rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend i { width: 18px; height: 3px; border-radius: 99px; background: var(--color); }
+    .chart-wrap { position: relative; height: min(52vh,490px); min-height: 330px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; min-width: 1450px; border-collapse: collapse; font-size: .7rem; }
+    th, td { padding: 8px 7px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+    th:first-child, td:first-child { position: sticky; left: 0; z-index: 2; min-width: 110px; text-align: left; font-weight: 800; background: #f8fbfc; }
+    thead th { color: #425b6d; background: #eef4f7; font-weight: 800; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .positive { color: var(--green); font-weight: 800; }
+    .negative { color: var(--red); font-weight: 800; }
+    .notice { display: flex; gap: 9px; align-items: flex-start; padding: 12px 14px; color: #6a5a24; background: #fff9e8; border: 1px solid #f0df9f; border-radius: 12px; font-size: .76rem; line-height: 1.45; }
+    .notice strong { color: #59460b; }
+    @media (max-width: 900px) {
+      .hero { align-items: stretch; flex-direction: column; }
+      .selector select { width: 100%; }
+      .cards { grid-template-columns: repeat(2,1fr); }
+      .panel-head { flex-direction: column; }
+      .chart-wrap { height: 390px; }
+    }
+    @media (max-width: 520px) {
+      .brand span { display: none; }
+      .back { padding: 8px 9px; font-size: .7rem; }
+      main { width: min(100% - 20px,1500px); margin-top: 16px; }
+      .cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .card { padding: 14px; }
+      .card strong { font-size: 1.35rem; }
+      .panel { padding: 13px; }
+      .chart-wrap { height: 360px; min-height: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <img class="logo" src="LogoPUPR.png" alt="Logo Kementerian PUPR" />
+    <div class="brand"><strong>Monitoring Fisik ATAB Wilayah III</strong><span>Direktorat Air Tanah dan Air Baku</span></div>
+    <a class="back" href="index.html">← Kembali ke WebGIS</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Pemantauan Kegiatan Fisik TA 2026</p>
+        <h1>Rencana dan Realisasi Mingguan BBWS Nusa Tenggara I</h1>
+        <p class="period">Periode pelaporan: <strong>25 September 2026</strong></p>
+      </div>
+      <div class="selector">
+        <label for="balaiSelect">Unit kerja</label>
+        <select id="balaiSelect"><option>BBWS Nusa Tenggara I</option></select>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Ringkasan progres">
+      <article class="card" style="--accent:var(--blue)"><span>Rencana</span><strong>59,56%</strong><small>Sampai minggu IV September</small></article>
+      <article class="card" style="--accent:var(--magenta)"><span>Realisasi</span><strong>64,14%</strong><small>Realisasi fisik kumulatif</small></article>
+      <article class="card" style="--accent:var(--green)"><span>Deviasi</span><strong style="color:var(--green)">+4,58%</strong><small>Lebih cepat dari rencana</small></article>
+      <article class="card" style="--accent:var(--orange)"><span>Target Akhir</span><strong>100%</strong><small>Desember 2026</small></article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2>Kurva-S Progres Fisik</h2><p>Arahkan kursor atau sentuh titik grafik untuk melihat nilai mingguan.</p></div>
+        <div class="legend"><span><i style="--color:var(--orange)"></i>Rencana</span><span><i style="--color:var(--magenta)"></i>Realisasi</span></div>
+      </div>
+      <div class="chart-wrap"><canvas id="progressChart" aria-label="Grafik rencana dan realisasi fisik mingguan"></canvas></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2>Data Mingguan</h2><p>Geser tabel ke samping untuk melihat seluruh periode.</p></div></div>
+      <div class="table-wrap"><table id="progressTable"></table></div>
+    </section>
+
+    <div class="notice"><span>⚠️</span><div><strong>Catatan validasi:</strong> pada sumber terdapat penurunan nilai kumulatif di beberapa minggu. Perlu dikonfirmasi apakah berasal dari koreksi bobot, perubahan paket, atau revisi baseline sebelum digunakan sebagai data resmi.</div></div>
+  </main>
+
+  <script>
+    const labels = ['April','08/05','15/05','22/05','29/05','05/06','12/06','19/06','26/06','03/07','10/07','17/07','24/07','31/07','07/08','14/08','21/08','28/08','04/09','11/09','18/09','25/09','02/10','09/10','16/10','23/10','30/10','06/11','13/11','20/11','27/11','04/12','11/12','18/12','25/12','31/12'];
+    const plan = [2.98,3.30,3.66,4.08,4.55,8.22,9.88,10.50,17.34,27.88,33.01,36.73,39.87,39.98,42.99,46.02,49.39,41.70,46.76,50.82,55.44,59.56,63.66,77.12,82.11,95.26,87.27,91.71,93.02,95.18,99.19,99.52,99.82,99.94,100,100];
+    const actual = [6.37,6.53,7.92,8.35,9.40,9.91,10.90,12.96,15.34,35.56,35.76,43.19,50.24,56.83,58.48,60.75,63.21,49.67,50.23,61.19,62.61,64.14,...Array(14).fill(null)];
+    const deviation = actual.map((value,index) => value === null ? null : +(value-plan[index]).toFixed(2));
+    const pct = value => value === null ? '—' : `${value.toLocaleString('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2})}%`;
+
+    const table = document.getElementById('progressTable');
+    table.innerHTML = `<thead><tr><th>Uraian</th>${labels.map(label=>`<th>${label}</th>`).join('')}</tr></thead><tbody>
+      <tr><td>Rencana</td>${plan.map(value=>`<td>${pct(value)}</td>`).join('')}</tr>
+      <tr><td>Realisasi</td>${actual.map(value=>`<td>${pct(value)}</td>`).join('')}</tr>
+      <tr><td>Deviasi</td>${deviation.map(value=>`<td class="${value === null ? '' : value >= 0 ? 'positive' : 'negative'}">${value === null ? '—' : `${value > 0 ? '+' : ''}${pct(value)}`}</td>`).join('')}</tr>
+    </tbody>`;
+
+    if (window.Chart) {
+      new Chart(document.getElementById('progressChart'), {
+        type: 'line',
+        data: { labels, datasets: [
+          { label:'Rencana', data:plan, borderColor:'#f0a500', backgroundColor:'#f0a500', borderWidth:3, pointRadius:3, pointHoverRadius:6, tension:.16 },
+          { label:'Realisasi', data:actual, borderColor:'#e65db3', backgroundColor:'#e65db3', borderWidth:3, pointRadius:3, pointHoverRadius:6, tension:.16, spanGaps:false }
+        ]},
+        options: {
+          responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${pct(ctx.parsed.y)}`}} },
+          scales:{
+            y:{min:0,max:100,ticks:{callback:value=>`${value}%`},title:{display:true,text:'Progres (%)'},grid:{color:'rgba(25,58,79,.09)'}},
+            x:{ticks:{maxRotation:60,minRotation:45,autoSkip:false,font:{size:10}},title:{display:true,text:'Minggu'},grid:{display:false}}
+          }
+        }
+      });
+    } else {
+      document.querySelector('.chart-wrap').innerHTML = '<div style="display:grid;place-items:center;height:100%;color:#65798a;text-align:center">Grafik belum dapat dimuat. Periksa koneksi internet.</div>';
+    }
+  </script>
+</body>
+</html>
