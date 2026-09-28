@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebGIS ATAB Wilayah III</title>
+  <meta name="description" content="Prototipe WebGIS pemantauan infrastruktur air tanah dan air baku Subdirektorat Wilayah III." />
+  <link rel="preconnect" href="https://unpkg.com" crossorigin />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b3050'/%3E%3Cpath d='M32 10C24 22 17 30 17 40a15 15 0 0030 0c0-10-7-18-15-30z' fill='%2324c8e5'/%3E%3Cpath d='M23 41c3 5 11 7 18 2' fill='none' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #08253e;
+      --navy-2: #0d3557;
+      --blue: #116b91;
+      --cyan: #20b9d7;
+      --sky: #d9f5fb;
+      --ink: #132534;
+      --muted: #647789;
+      --line: #d8e2e9;
+      --paper: #f4f8fa;
+      --white: #ffffff;
+      --green: #2aa775;
+      --amber: #e99a2d;
+      --red: #d95c5c;
+      --shadow: 0 18px 48px rgba(7, 31, 50, .14);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 16px;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: grid; grid-template-rows: 72px 1fr; height: 100%; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 22px;
+      color: white;
+      background:
+        radial-gradient(circle at 82% -110%, rgba(32,185,215,.58) 0 34%, transparent 35%),
+        linear-gradient(112deg, #071e33, #0c3a5f);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      z-index: 1100;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 315px; }
+    .brand-mark {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, #26c9e4, #1682a7);
+      box-shadow: inset 0 1px rgba(255,255,255,.35), 0 8px 20px rgba(0,0,0,.2);
+    }
+    .brand-mark svg { width: 25px; height: 25px; }
+    .brand h1 { margin: 0; font-size: 1rem; letter-spacing: .02em; }
+    .brand p { margin: 3px 0 0; font-size: .78rem; color: #b9d5e5; }
+    .top-search {
+      position: relative;
+      flex: 1;
+      max-width: 620px;
+    }
+    .top-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #a9c8da; }
+    .top-search input {
+      width: 100%; height: 42px; padding: 0 44px;
+      color: white; background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.17); border-radius: 13px; outline: none;
+    }
+    .top-search input::placeholder { color: #bad0de; }
+    .top-search input:focus { border-color: #4cd3e9; box-shadow: 0 0 0 3px rgba(32,185,215,.18); }
+    .demo-pill { margin-left: auto; padding: 8px 11px; border-radius: 999px; font-size: .75rem; font-weight: 750; letter-spacing: .04em; color: #092b43; background: #bdf5ff; white-space: nowrap; }
+
+    .workspace { min-height: 0; display: grid; grid-template-columns: 340px 1fr; }
+    .sidebar {
+      position: relative; z-index: 1000;
+      min-height: 0; display: flex; flex-direction: column;
+      background: rgba(255,255,255,.98);
+      border-right: 1px solid var(--line);
+      box-shadow: 12px 0 36px rgba(7,31,50,.08);
+    }
+    .summary { padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
+    .eyebrow { margin: 0 0 7px; font-size: .72rem; font-weight: 800; letter-spacing: .12em; color: var(--blue); text-transform: uppercase; }
+    .summary h2 { margin: 0; font-size: 1.28rem; line-height: 1.25; }
+    .summary-note { display: flex; gap: 7px; align-items: center; margin-top: 10px; color: var(--muted); font-size: .78rem; }
+    .summary-note .dot { width: 7px; height: 7px; background: var(--amber); border-radius: 50%; flex: 0 0 auto; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+    .stat { padding: 11px 9px; border: 1px solid #deeaef; border-radius: 12px; background: #f7fbfc; }
+    .stat strong { display: block; color: var(--navy); font-size: 1.08rem; }
+    .stat span { color: var(--muted); font-size: .68rem; line-height: 1.2; }
+    .filters { padding: 14px 20px; border-bottom: 1px solid var(--line); }
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .filters label { display: block; margin: 0 0 6px; color: #536a7c; font-size: .7rem; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
+    .filters select {
+      width: 100%; height: 39px; padding: 0 30px 0 10px;
+      color: #203647; background: white; border: 1px solid #d6e1e8; border-radius: 10px; outline: none;
+    }
+    .filters select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(32,185,215,.12); }
+    .result-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px 8px; }
+    .result-head strong { font-size: .85rem; }
+    .reset { border: 0; color: var(--blue); background: transparent; font-size: .75rem; font-weight: 750; }
+    .locations { min-height: 0; overflow: auto; padding: 0 12px 24px; }
+    .location-card {
+      width: 100%; padding: 13px 12px; margin: 5px 0;
+      text-align: left; background: white; border: 1px solid transparent; border-radius: 13px;
+      display: grid; grid-template-columns: 37px 1fr auto; gap: 10px; align-items: start;
+      transition: .18s ease;
+    }
+    .location-card:hover { background: #f4fafc; border-color: #d7eaf0; transform: translateY(-1px); }
+    .location-card.active { background: #eaf8fb; border-color: #92dce9; }
+    .type-icon { width: 37px; height: 37px; border-radius: 11px; display: grid; place-items: center; color: white; }
+    .type-icon svg { width: 19px; height: 19px; }
+    .location-card h3 { margin: 1px 0 4px; font-size: .86rem; line-height: 1.25; }
+    .location-card p { margin: 0; color: var(--muted); font-size: .72rem; line-height: 1.35; }
+    .status { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; font-size: .67rem; font-weight: 700; }
+    .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .status.operasi { color: var(--green); }
+    .status.konstruksi { color: var(--amber); }
+    .status.perencanaan { color: #6b70c9; }
+    .capacity { min-width: 56px; padding-top: 2px; text-align: right; color: var(--navy); font-size: .72rem; font-weight: 800; }
+
+    .map-shell { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #dfe9ed; }
+    #map { width: 100%; height: 100%; }
+    .map-error { position: absolute; inset: 0; z-index: 999; display: none; place-items: center; padding: 28px; background: #e8f0f3; text-align: center; }
+    .map-error div { max-width: 430px; padding: 24px; border-radius: 18px; background: white; box-shadow: var(--shadow); }
+    .map-tools { position: absolute; top: 16px; right: 16px; z-index: 700; display: flex; gap: 8px; }
+    .tool-btn {
+      height: 40px; padding: 0 13px; display: inline-flex; align-items: center; gap: 8px;
+      color: var(--navy); background: rgba(255,255,255,.96); border: 1px solid rgba(7,31,50,.12); border-radius: 11px; box-shadow: 0 7px 22px rgba(7,31,50,.14); font-size: .77rem; font-weight: 750;
+    }
+    .tool-btn:hover { background: #f0fbfd; }
+    .tool-btn svg { width: 16px; height: 16px; }
+    .legend {
+      position: absolute; left: 16px; bottom: 20px; z-index: 700;
+      width: 190px; padding: 13px 14px; background: rgba(255,255,255,.96); border: 1px solid rgba(7,31,50,.1); border-radius: 14px; box-shadow: 0 10px 28px rgba(7,31,50,.15);
+    }
+    .legend h3 { margin: 0 0 9px; font-size: .76rem; }
+    .legend-item { display: flex; align-items: center; gap: 9px; margin: 7px 0; color: #405768; font-size: .7rem; }
+    .legend-mark { width: 11px; height: 11px; border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 1px rgba(7,31,50,.18); }
+    .disclaimer { position: absolute; right: 16px; bottom: 20px; z-index: 700; padding: 9px 12px; color: #405567; background: rgba(255,255,255,.92); border-radius: 10px; box-shadow: 0 6px 20px rgba(7,31,50,.12); font-size: .68rem; }
+    .mobile-toggle { display: none; }
+
+    .leaflet-control-zoom a { color: var(--navy) !important; }
+    .leaflet-control-attribution { font-size: 10px !important; }
+    .leaflet-popup-content-wrapper { border-radius: 15px; box-shadow: var(--shadow); }
+    .leaflet-popup-content { width: 250px !important; margin: 16px; }
+    .popup-kicker { color: var(--blue); font-size: .68rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .popup-title { margin: 5px 0 4px; color: var(--navy); font-size: 1rem; font-weight: 800; }
+    .popup-meta { margin-bottom: 11px; color: var(--muted); font-size: .72rem; }
+    .popup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .popup-metric { padding: 8px; background: #f3f8fa; border-radius: 9px; }
+    .popup-metric span { display: block; color: var(--muted); font-size: .62rem; }
+    .popup-metric strong { display: block; margin-top: 2px; color: var(--ink); font-size: .76rem; }
+    .map-pin { width: 30px; height: 30px; border: 3px solid white; border-radius: 50% 50% 50% 14%; transform: rotate(-45deg); box-shadow: 0 5px 16px rgba(7,31,50,.34); }
+    .map-pin::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: white; opacity: .95; }
+
+    @media (max-width: 900px) {
+      .app { grid-template-rows: 64px 1fr; }
+      .topbar { padding: 0 13px; gap: 10px; }
+      .brand { min-width: 0; }
+      .brand-mark { width: 36px; height: 36px; }
+      .brand p, .demo-pill { display: none; }
+      .brand h1 { font-size: .88rem; }
+      .top-search { max-width: none; }
+      .top-search input { height: 38px; padding-left: 38px; font-size: .82rem; }
+      .workspace { grid-template-columns: 1fr; }
+      .sidebar {
+        position: absolute; left: 0; top: 64px; bottom: 0; width: min(88vw, 355px);
+        transform: translateX(-104%); transition: transform .25s ease; z-index: 1200;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-toggle { display: inline-flex; }
+      .map-tools { top: 12px; right: 12px; }
+      .tool-btn span { display: none; }
+      .tool-btn { width: 40px; padding: 0; justify-content: center; }
+      .legend { left: 12px; bottom: 14px; width: 168px; }
+      .disclaimer { display: none; }
+    }
+    @media (max-width: 560px) {
+      .topbar { gap: 8px; }
+      .brand-text { display: none; }
+      .top-search input { font-size: .77rem; }
+      .legend { padding: 10px 11px; width: 153px; }
+      .legend-item { margin: 5px 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <button class="tool-btn mobile-toggle" id="menuToggle" aria-label="Buka daftar lokasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C8.8 7 5 10.7 5 15a7 7 0 0014 0c0-4.3-3.8-8-7-13z" fill="white"/><path d="M8.2 15.3c1 1.8 3.5 2.5 5.8 1.2" stroke="#1682a7" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>WebGIS ATAB Wilayah III</h1>
+          <p>Direktorat Air Tanah dan Air Baku</p>
+        </div>
+      </div>
+      <div class="top-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
+        <input id="searchInput" type="search" placeholder="Cari kegiatan, kabupaten/kota, atau balai…" aria-label="Cari lokasi" />
+      </div>
+      <span class="demo-pill">PROTOTIPE · DATA CONTOH</span>
+    </header>
+
+    <section class="workspace">
+      <aside class="sidebar" id="sidebar">
+        <div class="summary">
+          <p class="eyebrow">Dashboard Spasial</p>
+          <h2>Pemantauan Infrastruktur Air</h2>
+          <div class="summary-note"><span class="dot"></span>Data pada versi ini untuk demonstrasi fungsi.</div>
+          <div class="stats">
+            <div class="stat"><strong id="statLocations">10</strong><span>Lokasi</span></div>
+            <div class="stat"><strong id="statCapacity">1.090</strong><span>Total L/detik</span></div>
+            <div class="stat"><strong id="statBalai">5</strong><span>Balai</span></div>
+          </div>
+        </div>
+        <div class="filters">
+          <div class="filter-row">
+            <div>
+              <label for="typeFilter">Jenis</label>
+              <select id="typeFilter"><option value="all">Semua jenis</option></select>
+            </div>
+            <div>
+              <label for="statusFilter">Status</label>
+              <select id="statusFilter"><option value="all">Semua status</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="result-head"><strong id="resultCount">10 lokasi ditampilkan</strong><button class="reset" id="resetFilters">Reset filter</button></div>
+        <div class="locations" id="locationList" aria-live="polite"></div>
+      </aside>
+
+      <section class="map-shell" aria-label="Peta lokasi infrastruktur">
+        <div id="map"></div>
+        <div class="map-error" id="mapError"><div><strong>Peta belum dapat dimuat.</strong><p>Periksa koneksi internet, lalu muat ulang halaman. Daftar lokasi tetap dapat digunakan.</p></div></div>
+        <div class="map-tools">
+          <button class="tool-btn" id="fitButton" title="Tampilkan semua lokasi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg><span>Tampilkan semua</span>
+          </button>
+          <button class="tool-btn" id="locateButton" title="Lokasi saya">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span>Lokasi saya</span>
+          </button>
+        </div>
+        <div class="legend">
+          <h3>Jenis Infrastruktur</h3>
+          <div class="legend-item"><span class="legend-mark" style="background:#137da7"></span>Air baku permukaan</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#6857c7"></span>Sumur air tanah</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#26a56f"></span>Embung / tampungan</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#e68a2e"></span>Jaringan transmisi</div>
+        </div>
+        <div class="disclaimer">Data contoh · Belum untuk pengambilan keputusan operasional</div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const facilities = [
+      { id: 1, name: 'Sistem Air Baku Citarum Utara', district: 'Kabupaten Karawang', province: 'Jawa Barat', balai: 'BBWS Citarum', type: 'Air Baku Permukaan', status: 'Operasi', capacity: 350, progress: 100, lat: -6.296, lng: 107.302 },
+      { id: 2, name: 'Intake Air Baku Jatigede', district: 'Kabupaten Sumedang', province: 'Jawa Barat', balai: 'BBWS Cimanuk Cisanggarung', type: 'Air Baku Permukaan', status: 'Konstruksi', capacity: 250, progress: 68, lat: -6.857, lng: 108.094 },
+      { id: 3, name: 'Sumur Produksi AT-03', district: 'Kabupaten Indramayu', province: 'Jawa Barat', balai: 'BBWS Cimanuk Cisanggarung', type: 'Sumur Air Tanah', status: 'Operasi', capacity: 25, progress: 100, lat: -6.325, lng: 108.324 },
+      { id: 4, name: 'Embung Air Baku Kedungombo', district: 'Kabupaten Grobogan', province: 'Jawa Tengah', balai: 'BBWS Pemali Juana', type: 'Embung / Tampungan', status: 'Perencanaan', capacity: 90, progress: 22, lat: -7.257, lng: 110.829 },
+      { id: 5, name: 'Jaringan Transmisi Serayu', district: 'Kabupaten Banyumas', province: 'Jawa Tengah', balai: 'BBWS Serayu Opak', type: 'Jaringan Transmisi', status: 'Konstruksi', capacity: 110, progress: 54, lat: -7.432, lng: 109.248 },
+      { id: 6, name: 'Sumur Air Tanah Pesisir', district: 'Kabupaten Cilacap', province: 'Jawa Tengah', balai: 'BBWS Serayu Opak', type: 'Sumur Air Tanah', status: 'Perencanaan', capacity: 20, progress: 15, lat: -7.687, lng: 109.043 },
+      { id: 7, name: 'Sistem Air Baku Bengawan', district: 'Kabupaten Bojonegoro', province: 'Jawa Timur', balai: 'BBWS Bengawan Solo', type: 'Air Baku Permukaan', status: 'Operasi', capacity: 140, progress: 100, lat: -7.151, lng: 111.881 },
+      { id: 8, name: 'Embung Pelayanan Perdesaan', district: 'Kabupaten Wonogiri', province: 'Jawa Tengah', balai: 'BBWS Bengawan Solo', type: 'Embung / Tampungan', status: 'Konstruksi', capacity: 35, progress: 73, lat: -7.815, lng: 110.922 },
+      { id: 9, name: 'Transmisi Air Baku Brantas', district: 'Kabupaten Mojokerto', province: 'Jawa Timur', balai: 'BBWS Brantas', type: 'Jaringan Transmisi', status: 'Operasi', capacity: 55, progress: 100, lat: -7.523, lng: 112.399 },
+      { id: 10, name: 'Sumur Dalam AT-07', district: 'Kabupaten Nganjuk', province: 'Jawa Timur', balai: 'BBWS Brantas', type: 'Sumur Air Tanah', status: 'Konstruksi', capacity: 15, progress: 81, lat: -7.603, lng: 111.902 }
+    ];
+
+    const colors = {
+      'Air Baku Permukaan': '#137da7',
+      'Sumur Air Tanah': '#6857c7',
+      'Embung / Tampungan': '#26a56f',
+      'Jaringan Transmisi': '#e68a2e'
+    };
+    const iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.8 7 5 10.7 5 15a7 7 0 0014 0c0-4.3-3.8-8-7-13z"/><path d="M8.5 15.5c1 1.7 3.4 2.3 5.5 1.2"/></svg>';
+    let map;
+    let markerLayer;
+    let markers = new Map();
+    let filtered = facilities.slice();
+
+    function statusClass(value) { return value.toLowerCase(); }
+    function formatNumber(value) { return new Intl.NumberFormat('id-ID').format(value); }
+    function unique(key) { return [...new Set(facilities.map(item => item[key]))].sort(); }
+
+    function populateSelect(id, values) {
+      const select = document.getElementById(id);
+      values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value; option.textContent = value; select.appendChild(option);
+      });
+    }
+
+    function createMap() {
+      if (!window.L) {
+        document.getElementById('mapError').style.display = 'grid';
+        return;
+      }
+      map = L.map('map', { zoomControl: false, minZoom: 4 }).setView([-7.1, 110.15], 7);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      markerLayer = L.layerGroup().addTo(map);
+      renderMarkers();
+    }
+
+    function popupHtml(item) {
+      return `<div class="popup-kicker">${item.type}</div>
+        <div class="popup-title">${item.name}</div>
+        <div class="popup-meta">${item.district}, ${item.province}<br>${item.balai}</div>
+        <div class="popup-grid">
+          <div class="popup-metric"><span>Status</span><strong>${item.status}</strong></div>
+          <div class="popup-metric"><span>Kapasitas</span><strong>${formatNumber(item.capacity)} L/detik</strong></div>
+          <div class="popup-metric"><span>Progres</span><strong>${item.progress}%</strong></div>
+          <div class="popup-metric"><span>ID Lokasi</span><strong>ATB-${String(item.id).padStart(3,'0')}</strong></div>
+        </div>`;
+    }
+
+    function renderMarkers() {
+      if (!map) return;
+      markerLayer.clearLayers(); markers.clear();
+      filtered.forEach(item => {
+        const icon = L.divIcon({ className: '', html: `<div class="map-pin" style="background:${colors[item.type]}"></div>`, iconSize: [30, 39], iconAnchor: [15, 35], popupAnchor: [0, -32] });
+        const marker = L.marker([item.lat, item.lng], { icon }).bindPopup(popupHtml(item));
+        marker.on('click', () => setActiveCard(item.id));
+        marker.addTo(markerLayer); markers.set(item.id, marker);
+      });
+    }
+
+    function renderList() {
+      const list = document.getElementById('locationList');
+      list.innerHTML = '';
+      if (!filtered.length) {
+        list.innerHTML = '<div style="padding:28px 15px;text-align:center;color:#647789;font-size:.83rem">Tidak ada lokasi yang cocok dengan filter.</div>';
+      }
+      filtered.forEach(item => {
+        const button = document.createElement('button');
+        button.className = 'location-card'; button.dataset.id = item.id;
+        button.innerHTML = `<span class="type-icon" style="background:${colors[item.type]}">${iconSvg}</span>
+          <span><h3>${item.name}</h3><p>${item.district}<br>${item.balai}</p><span class="status ${statusClass(item.status)}">${item.status} · ${item.progress}%</span></span>
+          <span class="capacity">${formatNumber(item.capacity)}<br><small>L/dtk</small></span>`;
+        button.addEventListener('click', () => focusLocation(item));
+        list.appendChild(button);
+      });
+      document.getElementById('resultCount').textContent = `${filtered.length} lokasi ditampilkan`;
+      document.getElementById('statLocations').textContent = filtered.length;
+      document.getElementById('statCapacity').textContent = formatNumber(filtered.reduce((sum, item) => sum + item.capacity, 0));
+      document.getElementById('statBalai').textContent = new Set(filtered.map(item => item.balai)).size;
+    }
+
+    function applyFilters() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const type = document.getElementById('typeFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      filtered = facilities.filter(item => {
+        const text = `${item.name} ${item.district} ${item.province} ${item.balai}`.toLowerCase();
+        return (!query || text.includes(query)) && (type === 'all' || item.type === type) && (status === 'all' || item.status === status);
+      });
+      renderList(); renderMarkers();
+    }
+
+    function setActiveCard(id) {
+      document.querySelectorAll('.location-card').forEach(card => card.classList.toggle('active', Number(card.dataset.id) === id));
+    }
+
+    function focusLocation(item) {
+      setActiveCard(item.id);
+      if (map && markers.has(item.id)) {
+        map.flyTo([item.lat, item.lng], 11, { duration: .7 });
+        markers.get(item.id).openPopup();
+      }
+      if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+    }
+
+    function fitVisible() {
+      if (!map || !filtered.length) return;
+      const bounds = L.latLngBounds(filtered.map(item => [item.lat, item.lng]));
+      map.fitBounds(bounds.pad(.16), { maxZoom: 9 });
+    }
+
+    populateSelect('typeFilter', unique('type'));
+    populateSelect('statusFilter', unique('status'));
+    renderList();
+    createMap();
+
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('typeFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    document.getElementById('resetFilters').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('typeFilter').value = 'all';
+      document.getElementById('statusFilter').value = 'all';
+      applyFilters(); fitVisible();
+    });
+    document.getElementById('fitButton').addEventListener('click', fitVisible);
+    document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
+    document.getElementById('locateButton').addEventListener('click', () => {
+      if (!map || !navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        pos => { map.flyTo([pos.coords.latitude, pos.coords.longitude], 12); L.circleMarker([pos.coords.latitude, pos.coords.longitude], { radius: 7, color: '#0b4d74', fillColor: '#20b9d7', fillOpacity: 1, weight: 3 }).addTo(map).bindPopup('Lokasi Anda').openPopup(); },
+        () => alert('Lokasi belum dapat diakses. Pastikan izin lokasi pada browser aktif.')
+      );
+    });
+  </script>
+</body>
+</html>
