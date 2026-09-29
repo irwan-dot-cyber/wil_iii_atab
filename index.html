@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="icon" type="image/png" href="./LogoPUPR.png" />
   <style>
     :root {
@@ -162,6 +163,8 @@
     .popup-metric strong { display: block; margin-top: 2px; color: var(--ink); font-size: .76rem; }
     .map-pin { width: 30px; height: 30px; border: 3px solid white; border-radius: 50% 50% 50% 14%; transform: rotate(-45deg); box-shadow: 0 5px 16px rgba(7,31,50,.34); }
     .map-pin::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: white; opacity: .95; }
+    .jiat-cluster { display: grid; place-items: center; color: white; background: #0b5b83; border: 4px solid white; border-radius: 50%; box-shadow: 0 5px 18px rgba(7,31,50,.35); font-size: 13px; font-weight: 800; }
+    .jiat-cluster span { line-height: 1; }
 
     @media (max-width: 900px) {
       .app { grid-template-rows: 64px 1fr; }
@@ -276,6 +279,7 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     let facilities = [];
     const colors = { 'Sumur': '#6857c7', 'Mata Air': '#137da7', 'Jaringan Irigasi': '#26a56f' };
@@ -337,7 +341,18 @@
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
       L.control.zoom({ position: 'bottomright' }).addTo(map);
-      markerLayer = L.layerGroup().addTo(map);
+      markerLayer = L.markerClusterGroup({
+        maxClusterRadius: 55, spiderfyOnMaxZoom: true, showCoverageOnHover: false,
+        chunkedLoading: true, chunkInterval: 100, chunkDelay: 10,
+        iconCreateFunction: cluster => {
+          const count = cluster.getChildCount();
+          const size = count >= 100 ? 52 : count >= 10 ? 46 : 40;
+          return L.divIcon({
+            html: `<span>${count}</span>`, className: 'jiat-cluster',
+            iconSize: [size, size], iconAnchor: [size / 2, size / 2]
+          });
+        }
+      }).addTo(map);
       renderMarkers();
     }
 
@@ -433,8 +448,8 @@
     function focusLocation(item) {
       setActiveCard(item.id);
       if (map && markers.has(item.id)) {
-        map.flyTo([item.lat, item.lng], 11, { duration: .7 });
-        markers.get(item.id).openPopup();
+        const marker = markers.get(item.id);
+        markerLayer.zoomToShowLayer(marker, () => marker.openPopup());
       }
       if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
     }
