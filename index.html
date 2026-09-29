@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://unpkg.com" crossorigin />
   <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="icon" type="image/png" href="LogoPUPR.png" />
+  <link rel="icon" type="image/png" href="./LogoPUPR.png" />
   <style>
     :root {
       color-scheme: light;
@@ -201,7 +201,7 @@
       </button>
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
-          <img src="LogoPUPR.png" alt="" />
+          <img src="./LogoPUPR.png" alt="" />
         </div>
         <div class="brand-text">
           <h1>WebGIS ATAB Wilayah III</h1>
@@ -210,10 +210,10 @@
       </div>
       <div class="top-search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg>
-        <input id="searchInput" type="search" placeholder="Cari kegiatan, kabupaten/kota, atau balai…" aria-label="Cari lokasi" />
+        <input id="searchInput" type="search" placeholder="Cari kegiatan, desa, kabupaten, atau balai…" aria-label="Cari lokasi" />
       </div>
       <a class="monitor-link" href="monitoring.html">Monitoring Fisik</a>
-      <span class="demo-pill">PROTOTIPE · DATA CONTOH</span>
+      <span class="demo-pill">DATA JIAT</span>
     </header>
 
     <section class="workspace">
@@ -221,11 +221,11 @@
         <div class="summary">
           <p class="eyebrow">Dashboard Spasial</p>
           <h2>Pemantauan Infrastruktur Air</h2>
-          <div class="summary-note"><span class="dot"></span>Data pada versi ini untuk demonstrasi fungsi.</div>
+          <div class="summary-note"><span class="dot"></span>Memuat data JIAT…</div>
           <div class="stats">
-            <div class="stat"><strong id="statLocations">10</strong><span>Lokasi</span></div>
-            <div class="stat"><strong id="statCapacity">1.090</strong><span>Total L/detik</span></div>
-            <div class="stat"><strong id="statBalai">5</strong><span>Balai</span></div>
+            <div class="stat"><strong id="statLocations">0</strong><span>Lokasi</span></div>
+            <div class="stat"><strong id="statCapacity">0</strong><span>Total debit L/detik</span></div>
+            <div class="stat"><strong id="statBalai">0</strong><span>Balai</span></div>
           </div>
         </div>
         <div class="filters">
@@ -240,7 +240,7 @@
             </div>
           </div>
         </div>
-        <div class="result-head"><strong id="resultCount">10 lokasi ditampilkan</strong><button class="reset" id="resetFilters">Reset filter</button></div>
+        <div class="result-head"><strong id="resultCount">0 lokasi ditampilkan</strong><button class="reset" id="resetFilters">Reset filter</button></div>
         <div class="locations" id="locationList" aria-live="polite"></div>
       </aside>
 
@@ -257,44 +257,54 @@
         </div>
         <div class="legend">
           <h3>Jenis Infrastruktur</h3>
-          <div class="legend-item"><span class="legend-mark" style="background:#137da7"></span>Air baku permukaan</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#6857c7"></span>Sumur air tanah</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#26a56f"></span>Embung / tampungan</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#e68a2e"></span>Jaringan transmisi</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#6857c7"></span>Sumur</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#137da7"></span>Mata air</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#26a56f"></span>Jaringan irigasi</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#e68a2e"></span>Jenis lainnya</div>
         </div>
-        <div class="disclaimer">Data contoh · Belum untuk pengambilan keputusan operasional</div>
+        <div class="disclaimer">Sumber: JIAT.geojson</div>
       </section>
     </section>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
-    const facilities = [
-      { id: 1, name: 'Sistem Air Baku Citarum Utara', district: 'Kabupaten Karawang', province: 'Jawa Barat', balai: 'BBWS Citarum', type: 'Air Baku Permukaan', status: 'Operasi', capacity: 350, progress: 100, lat: -6.296, lng: 107.302 },
-      { id: 2, name: 'Intake Air Baku Jatigede', district: 'Kabupaten Sumedang', province: 'Jawa Barat', balai: 'BBWS Cimanuk Cisanggarung', type: 'Air Baku Permukaan', status: 'Konstruksi', capacity: 250, progress: 68, lat: -6.857, lng: 108.094 },
-      { id: 3, name: 'Sumur Produksi AT-03', district: 'Kabupaten Indramayu', province: 'Jawa Barat', balai: 'BBWS Cimanuk Cisanggarung', type: 'Sumur Air Tanah', status: 'Operasi', capacity: 25, progress: 100, lat: -6.325, lng: 108.324 },
-      { id: 4, name: 'Embung Air Baku Kedungombo', district: 'Kabupaten Grobogan', province: 'Jawa Tengah', balai: 'BBWS Pemali Juana', type: 'Embung / Tampungan', status: 'Perencanaan', capacity: 90, progress: 22, lat: -7.257, lng: 110.829 },
-      { id: 5, name: 'Jaringan Transmisi Serayu', district: 'Kabupaten Banyumas', province: 'Jawa Tengah', balai: 'BBWS Serayu Opak', type: 'Jaringan Transmisi', status: 'Konstruksi', capacity: 110, progress: 54, lat: -7.432, lng: 109.248 },
-      { id: 6, name: 'Sumur Air Tanah Pesisir', district: 'Kabupaten Cilacap', province: 'Jawa Tengah', balai: 'BBWS Serayu Opak', type: 'Sumur Air Tanah', status: 'Perencanaan', capacity: 20, progress: 15, lat: -7.687, lng: 109.043 },
-      { id: 7, name: 'Sistem Air Baku Bengawan', district: 'Kabupaten Bojonegoro', province: 'Jawa Timur', balai: 'BBWS Bengawan Solo', type: 'Air Baku Permukaan', status: 'Operasi', capacity: 140, progress: 100, lat: -7.151, lng: 111.881 },
-      { id: 8, name: 'Embung Pelayanan Perdesaan', district: 'Kabupaten Wonogiri', province: 'Jawa Tengah', balai: 'BBWS Bengawan Solo', type: 'Embung / Tampungan', status: 'Konstruksi', capacity: 35, progress: 73, lat: -7.815, lng: 110.922 },
-      { id: 9, name: 'Transmisi Air Baku Brantas', district: 'Kabupaten Mojokerto', province: 'Jawa Timur', balai: 'BBWS Brantas', type: 'Jaringan Transmisi', status: 'Operasi', capacity: 55, progress: 100, lat: -7.523, lng: 112.399 },
-      { id: 10, name: 'Sumur Dalam AT-07', district: 'Kabupaten Nganjuk', province: 'Jawa Timur', balai: 'BBWS Brantas', type: 'Sumur Air Tanah', status: 'Konstruksi', capacity: 15, progress: 81, lat: -7.603, lng: 111.902 }
-    ];
-
-    const colors = {
-      'Air Baku Permukaan': '#137da7',
-      'Sumur Air Tanah': '#6857c7',
-      'Embung / Tampungan': '#26a56f',
-      'Jaringan Transmisi': '#e68a2e'
-    };
+    let facilities = [];
+    const colors = { 'Sumur': '#6857c7', 'Mata Air': '#137da7', 'Jaringan Irigasi': '#26a56f' };
+    const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function loadData() {
+      try {
+        const response = await fetch('./JIAT.geojson');
+        if (!response.ok) throw Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (data.type !== 'FeatureCollection' || !Array.isArray(data.features)) throw Error('GeoJSON tidak valid');
+        facilities = data.features.map((feature, index) => {
+          const p = feature.properties || {};
+          const [lng, lat] = feature.geometry?.coordinates || [];
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+          return { id: index + 1, name: p['Nama Kegia'] || 'JIAT ' + (index + 1),
+            district: [p['Desa / Kel'], p.Kecamatan, p.Kabupaten].filter(Boolean).join(', '),
+            province: p.Provinsi || '', balai: p.Balai || '—',
+            type: p['Jenis Infr'] || 'JIAT', status: p['Jenis Peke'] || '—',
+            capacity: Number(p['Debit\n(L/d']) || 0, depth: p.Kedalaman,
+            stage: p.Kegiatan, lat, lng };
+        }).filter(Boolean);
+        filtered = facilities.slice();
+        populateSelect('typeFilter', unique('type'));
+        populateSelect('statusFilter', unique('status'));
+        renderList(); renderMarkers(); fitVisible();
+        document.querySelector('.summary-note').textContent = 'Data spasial JIAT · ' + facilities.length + ' lokasi';
+      } catch (error) {
+        document.querySelector('.summary-note').textContent = 'Gagal memuat JIAT.geojson: ' + error.message;
+      }
+    }
     const iconSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.8 7 5 10.7 5 15a7 7 0 0014 0c0-4.3-3.8-8-7-13z"/><path d="M8.5 15.5c1 1.7 3.4 2.3 5.5 1.2"/></svg>';
     let map;
     let markerLayer;
     let markers = new Map();
     let filtered = facilities.slice();
 
-    function statusClass(value) { return value.toLowerCase(); }
+    function statusClass(value) { return 'operasi'; }
     function formatNumber(value) { return new Intl.NumberFormat('id-ID').format(value); }
     function unique(key) { return [...new Set(facilities.map(item => item[key]))].sort(); }
 
@@ -322,14 +332,14 @@
     }
 
     function popupHtml(item) {
-      return `<div class="popup-kicker">${item.type}</div>
-        <div class="popup-title">${item.name}</div>
-        <div class="popup-meta">${item.district}, ${item.province}<br>${item.balai}</div>
+      return `<div class="popup-kicker">${esc(item.type)}</div>
+        <div class="popup-title">${esc(item.name)}</div>
+        <div class="popup-meta">${esc(item.district)}, ${esc(item.province)}<br>${esc(item.balai)}</div>
         <div class="popup-grid">
-          <div class="popup-metric"><span>Status</span><strong>${item.status}</strong></div>
-          <div class="popup-metric"><span>Kapasitas</span><strong>${formatNumber(item.capacity)} L/detik</strong></div>
-          <div class="popup-metric"><span>Progres</span><strong>${item.progress}%</strong></div>
-          <div class="popup-metric"><span>ID Lokasi</span><strong>ATB-${String(item.id).padStart(3,'0')}</strong></div>
+          <div class="popup-metric"><span>Jenis pekerjaan</span><strong>${esc(item.status)}</strong></div>
+          <div class="popup-metric"><span>Debit</span><strong>${item.capacity ? formatNumber(item.capacity) + ' L/detik' : '—'}</strong></div>
+          <div class="popup-metric"><span>Kedalaman</span><strong>${item.depth == null ? '—' : esc(item.depth) + ' m'}</strong></div>
+          <div class="popup-metric"><span>Kegiatan</span><strong>${esc(item.stage)}</strong></div>
         </div>`;
     }
 
@@ -337,7 +347,7 @@
       if (!map) return;
       markerLayer.clearLayers(); markers.clear();
       filtered.forEach(item => {
-        const icon = L.divIcon({ className: '', html: `<div class="map-pin" style="background:${colors[item.type]}"></div>`, iconSize: [30, 39], iconAnchor: [15, 35], popupAnchor: [0, -32] });
+        const icon = L.divIcon({ className: '', html: `<div class="map-pin" style="background:${colors[item.type] || '#e68a2e'}"></div>`, iconSize: [30, 39], iconAnchor: [15, 35], popupAnchor: [0, -32] });
         const marker = L.marker([item.lat, item.lng], { icon }).bindPopup(popupHtml(item));
         marker.on('click', () => setActiveCard(item.id));
         marker.addTo(markerLayer); markers.set(item.id, marker);
@@ -353,9 +363,9 @@
       filtered.forEach(item => {
         const button = document.createElement('button');
         button.className = 'location-card'; button.dataset.id = item.id;
-        button.innerHTML = `<span class="type-icon" style="background:${colors[item.type]}">${iconSvg}</span>
-          <span><h3>${item.name}</h3><p>${item.district}<br>${item.balai}</p><span class="status ${statusClass(item.status)}">${item.status} · ${item.progress}%</span></span>
-          <span class="capacity">${formatNumber(item.capacity)}<br><small>L/dtk</small></span>`;
+        button.innerHTML = `<span class="type-icon" style="background:${colors[item.type] || '#e68a2e'}">${iconSvg}</span>
+          <span><h3>${esc(item.name)}</h3><p>${esc(item.district)}<br>${esc(item.balai)}</p><span class="status ${statusClass(item.status)}">${esc(item.status)} · ${esc(item.province)}</span></span>
+          <span class="capacity">${item.capacity ? formatNumber(item.capacity) : "—"}<br><small>L/dtk</small></span>`;
         button.addEventListener('click', () => focusLocation(item));
         list.appendChild(button);
       });
@@ -395,10 +405,9 @@
       map.fitBounds(bounds.pad(.16), { maxZoom: 9 });
     }
 
-    populateSelect('typeFilter', unique('type'));
-    populateSelect('statusFilter', unique('status'));
     renderList();
     createMap();
+    loadData();
 
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('typeFilter').addEventListener('change', applyFilters);
