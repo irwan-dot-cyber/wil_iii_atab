@@ -271,9 +271,7 @@
         <div class="legend">
           <h3>Jenis Infrastruktur</h3>
           <div class="legend-item"><span class="legend-mark" style="background:#6857c7"></span>Sumur</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#137da7"></span>Mata air</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#26a56f"></span>Jaringan irigasi</div>
-          <div class="legend-item"><span class="legend-mark" style="background:#e68a2e"></span>Jenis lainnya</div>
+          <div class="legend-item"><span class="legend-mark" style="background:#26a56f"></span>Embung</div>
         </div>
         <div class="disclaimer">Sumber: JIAT.geojson</div>
       </section>
@@ -284,7 +282,7 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script>
     let facilities = [];
-    const colors = { 'Sumur': '#6857c7', 'Mata Air': '#137da7', 'Jaringan Irigasi': '#26a56f' };
+    const colors = { 'Sumur': '#6857c7', 'Embung': '#26a56f' };
     const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     async function loadData() {
       try {
