@@ -97,6 +97,8 @@
     .stat span { color: var(--muted); font-size: .68rem; line-height: 1.2; }
     .filters { padding: 14px 20px; border-bottom: 1px solid var(--line); }
     .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .region-row { margin-top: 13px; }
+    .filters select:disabled { color: #8796a3; background: #f1f5f7; cursor: not-allowed; }
     .filters label { display: block; margin: 0 0 6px; color: #536a7c; font-size: .7rem; font-weight: 750; text-transform: uppercase; letter-spacing: .07em; }
     .filters select {
       width: 100%; height: 39px; padding: 0 30px 0 10px;
@@ -239,6 +241,12 @@
               <select id="statusFilter"><option value="all">Semua status</option></select>
             </div>
           </div>
+          <div class="filter-row region-row">
+            <div><label for="provinceFilter">Provinsi</label><select id="provinceFilter"><option value="all">Semua provinsi</option></select></div>
+            <div><label for="districtFilter">Kabupaten/Kota</label><select id="districtFilter" disabled><option value="all">Semua kabupaten/kota</option></select></div>
+            <div><label for="subdistrictFilter">Kecamatan</label><select id="subdistrictFilter" disabled><option value="all">Semua kecamatan</option></select></div>
+            <div><label for="villageFilter">Desa/Kelurahan</label><select id="villageFilter" disabled><option value="all">Semua desa/kelurahan</option></select></div>
+          </div>
         </div>
         <div class="result-head"><strong id="resultCount">0 lokasi ditampilkan</strong><button class="reset" id="resetFilters">Reset filter</button></div>
         <div class="locations" id="locationList" aria-live="polite"></div>
@@ -284,7 +292,8 @@
           if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
           return { id: index + 1, name: p['Nama Kegia'] || 'JIAT ' + (index + 1),
             district: [p['Desa / Kel'], p.Kecamatan, p.Kabupaten].filter(Boolean).join(', '),
-            province: p.Provinsi || '', balai: p.Balai || '—',
+            province: String(p.Provinsi || '').trim(), kabupaten: String(p.Kabupaten || '').trim(),
+            kecamatan: String(p.Kecamatan || '').trim(), desa: String(p['Desa / Kel'] || '').trim(), balai: p.Balai || '—',
             type: p['Jenis Infr'] || 'JIAT', status: p['Jenis Peke'] || '—',
             capacity: Number(p['Debit\n(L/d']) || 0, depth: p.Kedalaman,
             stage: p.Kegiatan, lat, lng };
@@ -292,6 +301,7 @@
         filtered = facilities.slice();
         populateSelect('typeFilter', unique('type'));
         populateSelect('statusFilter', unique('status'));
+        refreshRegionOptions();
         renderList(); renderMarkers(); fitVisible();
         document.querySelector('.summary-note').textContent = 'Data spasial JIAT · ' + facilities.length + ' lokasi';
       } catch (error) {
@@ -375,13 +385,43 @@
       document.getElementById('statBalai').textContent = new Set(filtered.map(item => item.balai)).size;
     }
 
+    const regionLevels = [
+      { id: 'provinceFilter', key: 'province', label: 'Semua provinsi' },
+      { id: 'districtFilter', key: 'kabupaten', label: 'Semua kabupaten/kota' },
+      { id: 'subdistrictFilter', key: 'kecamatan', label: 'Semua kecamatan' },
+      { id: 'villageFilter', key: 'desa', label: 'Semua desa/kelurahan' }
+    ];
+
+    function refreshRegionOptions(startLevel = 0) {
+      for (let level = startLevel; level < regionLevels.length; level++) {
+        const current = regionLevels[level];
+        const select = document.getElementById(current.id);
+        select.replaceChildren(new Option(current.label, 'all'));
+        const parentSelections = regionLevels.slice(0, level);
+        const candidates = facilities.filter(item =>
+          parentSelections.every(parent => {
+            const value = document.getElementById(parent.id).value;
+            return value === 'all' || item[parent.key] === value;
+          })
+        );
+        const values = [...new Set(candidates.map(item => item[current.key]).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b, 'id'));
+        values.forEach(value => select.add(new Option(value, value)));
+        select.disabled = level > 0 && document.getElementById(regionLevels[level - 1].id).value === 'all';
+      }
+    }
+
     function applyFilters() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       const type = document.getElementById('typeFilter').value;
       const status = document.getElementById('statusFilter').value;
       filtered = facilities.filter(item => {
         const text = `${item.name} ${item.district} ${item.province} ${item.balai}`.toLowerCase();
-        return (!query || text.includes(query)) && (type === 'all' || item.type === type) && (status === 'all' || item.status === status);
+        const regionMatches = regionLevels.every(level => {
+          const value = document.getElementById(level.id).value;
+          return value === 'all' || item[level.key] === value;
+        });
+        return regionMatches && (!query || text.includes(query)) && (type === 'all' || item.type === type) && (status === 'all' || item.status === status);
       });
       renderList(); renderMarkers();
     }
@@ -412,10 +452,15 @@
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('typeFilter').addEventListener('change', applyFilters);
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    regionLevels.forEach((level, index) => document.getElementById(level.id).addEventListener('change', () => {
+      refreshRegionOptions(index + 1);
+      applyFilters(); fitVisible();
+    }));
     document.getElementById('resetFilters').addEventListener('click', () => {
       document.getElementById('searchInput').value = '';
       document.getElementById('typeFilter').value = 'all';
       document.getElementById('statusFilter').value = 'all';
+      refreshRegionOptions();
       applyFilters(); fitVisible();
     });
     document.getElementById('fitButton').addEventListener('click', fitVisible);
