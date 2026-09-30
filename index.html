@@ -194,6 +194,9 @@
     @media (max-width: 560px) {
       .topbar { gap: 8px; }
       .brand-text { display: none; }
+      .monitor-link { width: 39px; padding: 9px 4px; overflow: hidden; font-size: 0; text-align: center; }
+      .monitor-link[href="monitoring.html"]::after { content: "Fisik"; font-size: .64rem; }
+      .monitor-link[href="tender.html"]::after { content: "PBJ"; font-size: .64rem; }
       .top-search input { font-size: .77rem; }
       .legend { padding: 10px 11px; width: 153px; }
       .legend-item { margin: 5px 0; }
@@ -220,6 +223,7 @@
         <input id="searchInput" type="search" placeholder="Cari kegiatan, desa, kabupaten, atau balai…" aria-label="Cari lokasi" />
       </div>
       <a class="monitor-link" href="monitoring.html">Monitoring Fisik</a>
+      <a class="monitor-link" href="tender.html">Dashboard Tender</a>
       <span class="demo-pill">DATA JIAT</span>
     </header>
 

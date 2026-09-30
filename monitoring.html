@@ -19,7 +19,7 @@
   </style>
 </head>
 <body>
-  <header class="topbar"><img class="logo" src="./LogoPUPR.png" alt="Logo PUPR"><div class="brand"><strong>WebGIS ATAB Wilayah III</strong><span>Direktorat Air Tanah dan Air Baku</span></div><div class="header-actions"><a class="excel-link" href="https://puprtes-my.sharepoint.com/:x:/g/personal/jenjosehutabarat_pu_go_id/IQAnqddj99J4SIAjLoOhSehYAdKef8KqzsysxJXIs8jb_CY?e=uQ05qW" target="_blank" rel="noopener noreferrer">▣ Buka File Excel</a><a class="back" href="./index.html">← Kembali ke Peta</a></div></header>
+  <header class="topbar"><img class="logo" src="./LogoPUPR.png" alt="Logo PUPR"><div class="brand"><strong>WebGIS ATAB Wilayah III</strong><span>Direktorat Air Tanah dan Air Baku</span></div><div class="header-actions"><a class="excel-link" href="./tender.html">Dashboard Tender</a><a class="back" href="./index.html">← Kembali ke Peta</a></div></header>
   <main>
     <p class="eyebrow">Monitoring fisik dan keuangan</p><h1>Progres Paket Kegiatan Wilayah III</h1>
     <p class="intro">Perbandingan rencana dan realisasi sampai 25 September 2026. Progres sebelumnya: 18 September 2026.</p>
@@ -61,3 +61,67 @@
         ['SNVT PJPA BWS Kalimantan I','Pembangunan ABSAH di Kabupaten Mempawah, Kubu Raya, dan Ketapang (14 Unit)',4200000000,'Jeffry Johny Polli, S.T.',[3.72,14.07,66.98,25,24.66,17.33,7.33,-42.32,-7.67,20.94,3.26]]
       ]},
       {balai:'BWS MALUKU',head:'Ir. Irfan Badhillah Rery, S.T., M.T.',budget:7100000000,metrics:[7.36,0,31.62,31.62,16.30,0,16.30,-15.32,-31.62,8.94,0],items:[
+        ['SNVT PJPA BWS Maluku','Konsultan Teknis Balai Pekerjaan Rehabilitasi Embung Pendidikan Universitas Pattimura Kota Ambon; 1 Dokumen; 1 Dokumen; NF; K; SYC',400000000,'Ir. Geri Ramdhan Dazali, S.T., MPSDA',[0,0,30,30,0,0,0,-30,-30,0,0]],
+        ['SNVT PJPA BWS Maluku','Pembangunan Sarana dan Prasarana Jaringan Irigasi Air Tanah (JIAT) Layeni Kabupaten Maluku Tengah; 1,2 Km; 5 Ha F; S; SYC',2000000000,'Herry Pancara Budhi, S.T.',[23.03,0,32.50,32.50,30.14,0,30.14,-2.36,-32.50,7.11,0]],
+        ['SNVT PJPA BWS Maluku','Pembangunan Sarana dan Prasarana Jaringan Irigasi Air Tanah (JIAT) Parbulu Kabupaten Buru; 1,6 Km; 8 Ha F; S; SYC',2000000000,'Herry Pancara Budhi, S.T.',[3.09,0,32.50,32.50,22.87,0,22.87,-9.63,-32.50,19.78,0]],
+        ['SNVT PJPA BWS Maluku','Pembangunan Sarana dan Prasarana Jaringan Irigasi Air Tanah (JIAT) Waelo Kabupaten Buru; 1,6 Km; 8 Ha F; S; SYC',2000000000,'Herry Pancara Budhi, S.T.',[0,0,32.50,32.50,3.56,0,3.56,-28.94,-32.50,3.56,0]],
+        ['SNVT PJPA BWS Maluku','Pembangunan ABSAH Pulau Rhun dan Pulau Ay Kecamatan Banda Prov. Maluku; 2 Unit; 120 m3; F; S; SYC',700000000,'Herry Pancara Budhi, S.T.',[0,0,25,25,3.66,0,3.66,-21.34,-25,3.66,0]]
+      ]},
+      {balai:'BWS MALUKU UTARA',head:'Imanda Kristandi, S.T.',budget:4000000000,metrics:[0,0,25,60,0,0,0,-25,-60,0,0],items:[
+        ['SNVT PJPA BWS Maluku Utara','Kegiatan Pengadaan Water Tank Truck 5000 L dan Pick Up Truck; Kota Ternate; Maluku Utara',2000000000,'Edi Sukirman, S.T., M.T.',[0,0,30,60,0,0,0,-30,-60,0,0]],
+        ['SNVT PJPA BWS Maluku Utara','Pembangunan Jaringan Irigasi Air Tanah Desa Wairoro Indah I, Kec. Weda Selatan, Kab. Halmahera Tengah; Maluku Utara',2000000000,'Edi Sukirman, S.T., M.T.',[0,0,20,60,0,0,0,-20,-60,0,0]]
+      ]}
+    ];
+    const kekeringanSwakelolaTotal = {budget:27650000000,metrics:[4.87,2.91,32.45,38.65,12.13,5.01,7.12,-20.32,-33.64,7.26,2.10]};
+    let groups=kekeringanSwakelolaGroups, total=kekeringanSwakelolaTotal;
+    const rupiah = n => new Intl.NumberFormat('id-ID').format(n);
+    const percent = n => new Intl.NumberFormat('id-ID',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n) + '%';
+    const safe = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const cells = metrics => metrics.map((value,i)=>`<td class="pct ${i===7||i===8 ? (value<0?'negative':value>0?'positive':'') : ''}">${percent(value)}</td>`).join('');
+    const filter = document.getElementById('balaiFilter');
+    function setFilterOptions(){filter.replaceChildren(new Option('Semua balai','all'));groups.forEach(group=>filter.add(new Option(group.balai,group.balai)));}
+    setFilterOptions();
+    function render(){
+      const balai = filter.value, query = document.getElementById('search').value.trim().toLocaleLowerCase('id-ID');
+      const visible = groups.map(group=>({...group,items:group.items.filter(item=>(balai==='all'||group.balai===balai)&&(!query||`${group.balai} ${group.head} ${item[0]} ${item[1]} ${item[3]}`.toLocaleLowerCase('id-ID').includes(query)))})).filter(group=>group.items.length);
+      const rows = [];
+      if(balai==='all'&&!query) rows.push(`<tr class="total"><td colspan="3">TOTAL WILAYAH III</td><td class="money">${rupiah(total.budget)}</td><td></td>${cells(total.metrics)}</tr>`);
+      for(const group of visible){
+        const showGroupTotal = !query;
+        rows.push(`<tr class="group"><td colspan="3">${safe(group.balai)}</td><td class="money">${showGroupTotal?rupiah(group.budget):'—'}</td><td>${safe(group.head)}</td>${showGroupTotal?cells(group.metrics):'<td colspan="11">Hasil pencarian pada balai ini</td>'}</tr>`);
+        group.items.forEach((item,index)=>rows.push(`<tr><td class="number">${index+1}</td><td class="name">${safe(item[0])}</td><td class="package">${safe(item[1])}</td><td class="money">${rupiah(item[2])}</td><td class="person">${safe(item[3])}</td>${cells(item[4])}</tr>`));
+      }
+      document.getElementById('rows').innerHTML = rows.join('') || '<tr><td colspan="16" class="empty">Tidak ada paket yang sesuai filter.</td></tr>';
+      const count = visible.reduce((sum,group)=>sum+group.items.length,0);
+      document.getElementById('count').textContent = `${count} paket dari ${visible.length} balai ditampilkan`;
+    }
+    filter.addEventListener('change',render);document.getElementById('search').addEventListener('input',render);
+    document.getElementById('reset').addEventListener('click',()=>{filter.value='all';document.getElementById('search').value='';render()});render();
+    const views = {
+      'reguler-kontraktual':{title:'Reguler · Kontraktual',budget:142902876000,count:22,balai:9,physical:60,financial:58.61,planPhysical:63.13,planFinancial:61.96,deviationPhysical:-3.13,deviationFinancial:-3.35},
+      'reguler-swakelola':{title:'Reguler · Swakelola',budget:37704995000,count:15,balai:5,physical:95.84,financial:92.18,planPhysical:84.74,planFinancial:89.82,deviationPhysical:11.10,deviationFinancial:2.36},
+      'kekeringan-kontraktual':{title:'Antisipasi Kekeringan · Kontraktual',budget:8200000000,count:2,balai:2,physical:0,financial:0,planPhysical:13.66,planFinancial:13.66,deviationPhysical:-13.66,deviationFinancial:-13.66},
+      'kekeringan-swakelola':{title:'Antisipasi Kekeringan · Swakelola',budget:27650000000,count:13,balai:5,physical:12.13,financial:5.01,planPhysical:32.45,planFinancial:38.65,deviationPhysical:-20.32,deviationFinancial:-33.64}
+    };
+    function showView(key){
+      const v=views[key]||views['kekeringan-swakelola'];
+      document.querySelectorAll('.tab').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.view===key)));
+      document.getElementById('totalBudget').textContent='Rp'+new Intl.NumberFormat('id-ID',{maximumFractionDigits:2}).format(v.budget/1e9)+' M';
+      document.getElementById('budgetExact').textContent=rupiah(v.budget)+' rupiah';
+      document.getElementById('packageCount').textContent=v.count;
+      document.getElementById('balaiCount').textContent=v.balai+' balai';
+      document.getElementById('physical').textContent=percent(v.physical);
+      document.getElementById('financial').textContent=percent(v.financial);
+      document.getElementById('physicalDetail').textContent=`Rencana ${percent(v.planPhysical)} · deviasi ${percent(v.deviationPhysical)}`;
+      document.getElementById('financialDetail').textContent=`Rencana ${percent(v.planFinancial)} · deviasi ${percent(v.deviationFinancial)}`;
+      const source=extraMonitoring[key];
+      groups=source?source.groups.map(group=>({...group,items:group.items.map(item=>[group.satker,item[0],item[1],item[2],item[3]])})):kekeringanSwakelolaGroups;
+      total=source?{budget:source.total[0],metrics:source.total[1]}:kekeringanSwakelolaTotal;
+      setFilterOptions();document.getElementById('search').value='';render();
+      history.replaceState(null,'','#'+key);
+    }
+    document.querySelectorAll('.tab').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
+    showView(views[location.hash.slice(1)]?location.hash.slice(1):'kekeringan-swakelola');
+  </script>
+</body>
+</html>
